@@ -8,11 +8,14 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
+    "adbc-driver-snowflake>=1.10.0",
     "apache-airflow>=3.1.8",
+    "asyncio>=4.0.0",
     "dbt-core>=1.11.7",
     "dbt-snowflake>=1.11.3",
     "httpx>=0.28.1",
     "loguru>=0.7.3",
+    "polars>=1.39.3",
     "python-dotenv>=1.2.2",
     "snowflake-connector-python>=4.3.0",
 ]

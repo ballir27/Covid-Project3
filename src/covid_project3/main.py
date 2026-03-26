@@ -1,11 +1,17 @@
+import asyncio
+
 import config
+import ingestion
 from loguru import logger
 
 
-def main():
+async def main():
     try:
         snow_conn = config.snow_config()
         snow_cursor = snow_conn.cursor()
+
+        cdc_covid_data = await ingestion.cdc_covid_case_surveillance()
+        print(cdc_covid_data.head())
 
     except Exception as e:
         logger.error(f"Error uploading to Snowflake: {e}")
@@ -16,4 +22,4 @@ def main():
         snow_conn.close()
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
