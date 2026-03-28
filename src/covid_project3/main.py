@@ -1,5 +1,6 @@
 import asyncio
 
+import census_ingestion
 import config
 import ingestion
 from loguru import logger
@@ -10,8 +11,11 @@ async def main():
         snow_conn = config.snow_config()
         snow_cursor = snow_conn.cursor()
 
-        cdc_covid_data = await ingestion.cdc_covid_case_surveillance()
-        print(cdc_covid_data.head())
+        # cdc_covid_data = await ingestion.cdc_covid_case_surveillance()
+        # print(cdc_covid_data.head())
+
+        fips_pop_data = census_ingestion.fips_pop_from_api()
+        print(fips_pop_data.head())
 
     except Exception as e:
         logger.error(f"Error uploading to Snowflake: {e}")
