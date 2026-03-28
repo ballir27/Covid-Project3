@@ -2,6 +2,7 @@ import os
 from urllib.parse import quote, urlencode
 
 import polars as pl
+import pyarrow as pa
 import requests
 from dotenv import load_dotenv
 from loguru import logger
@@ -63,3 +64,62 @@ def fips_pop_from_api():
         return fips_pop
     except Exception as e:
         logger.error(f"Error in fips_pop_from_api: {e}")
+        raise e
+
+
+def fips_pop_snowflake_upload(census_polars, adbc_conn, snow_cursor):
+    logger.info("Uploading FIPS population data to Snowflake...")
+        # Ensure compatibility with Snowflake's file path format
+
+    try:
+        #Stage and upload the files to Snowflake
+        snow_cursor.execute("USE DATABASE COVID19_DB")
+        snow_cursor.execute("USE SCHEMA BRONZE")
+        snow_cursor.execute("CREATE OR REPLACE STAGE CENSUS_STAGE")
+
+        logger.info("Uploading 2023 US Census to Snowflake...")
+        snow_cursor.execute("""
+            CREATE OR REPLACE TABLE US_CENSUS_2023 (
+                Total_Population INT,
+                Male_Population INT,
+                Female_Population INT,
+                Age_Under_5_Population INT,
+                Age_5_To_9_Population INT,
+                Age_10_To_14_Population INT,
+                Age_15_To_19_Population INT,
+                Age_20_To_24_Population INT,
+                Age_25_To_34_Population INT,
+                Age_35_To_44_Population INT,
+                Age_45_To_54_Population INT,
+                Age_55_To_59_Population INT,
+                Age_60_To_64_Population INT,
+                Age_65_To_74_Population INT,
+                Age_75_To_84_Population INT,
+                Age_85_Plus_Population INT,
+                White_Population INT,
+                Black_Or_African_American_Population INT,
+                American_Indian_And_Alaska_Native_Population INT,
+                Asian_Population INT,
+                Native_Hawaiian_And_Other_Pacific_Islander_Population INT,
+                Some_Other_Race_Population INT,
+                State STRING,
+                County STRING
+            )
+        """)
+
+        #To ensure all string columns are treated as strings in Snowflake (Snowflake doesn't play nice with Polars)
+        arrow_table = census_polars.to_arrow()
+
+        with adbc_conn.cursor() as adbc_cursor:
+            adbc_cursor.adbc_ingest(
+                table_name="US_CENSUS_2023",
+                data=arrow_table,
+                mode="replace"
+            )
+
+        adbc_conn.commit()
+        logger.info("FIPS population data uploaded successfully to Snowflake")
+
+    except Exception as e:
+        logger.error(f"Error uploading 2023 US Census data to Snowflake: {e}")
+        raise e
