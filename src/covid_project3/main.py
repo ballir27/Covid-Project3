@@ -41,5 +41,4 @@ if __name__ == "__main__":
             select_columns=SELECT_COLUMNS,
         )
     )
-    
-    #  await run_census_pipeline()
+    asyncio.run(run_census_pipeline())
