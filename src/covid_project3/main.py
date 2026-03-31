@@ -1,7 +1,7 @@
 import asyncio
 
 from covid_project3.config import config
-from covid_project3.ingestion.engine import run_pipeline ,run_census_pipeline
+from covid_project3.ingestion.engine import run_pipeline
 
 
 ENDPOINT = config["CDC_COVID_API_ENDPOINT"]
