@@ -2,14 +2,28 @@
 import snowflake.connector
 import polars as pl
 from loguru import logger
+from pathlib import Path
+import tempfile
+import threading
 from covid_project3.config import config
 
-_connection = None
+# Thread-local storage so each thread gets its own Snowflake connection.
+# The global singleton approach is not thread-safe: concurrent threads calling
+# conn.cursor() on the same connection object cause failures in the executor.
+_thread_local = threading.local()
+
+
+def _staging_parquet_path(filename: str) -> Path:
+    staging_dir = Path(tempfile.gettempdir()) / "covid_project3"
+    staging_dir.mkdir(parents=True, exist_ok=True)
+    return staging_dir / filename
+
 
 def get_connection():
-    global _connection
-    if _connection is None:
-        _connection = snowflake.connector.connect(
+    """Return a Snowflake connection scoped to the current thread."""
+    conn = getattr(_thread_local, "connection", None)
+    if conn is None or conn.is_closed():
+        conn = snowflake.connector.connect(
             user=config["SNOWFLAKE_USER"],
             password=config["SNOWFLAKE_PASSWORD"],
             account=config["SNOWFLAKE_ACCOUNT"],
@@ -17,7 +31,8 @@ def get_connection():
             database=config["SNOWFLAKE_DATABASE"],
             schema=config["SNOWFLAKE_SCHEMA"],
         )
-    return _connection
+        _thread_local.connection = conn
+    return conn
 
 
 def create_table_if_not_exists(cursor, df: pl.DataFrame, table_name: str):
@@ -75,8 +90,8 @@ def upload_to_snowflake(df: pl.DataFrame, batch_id: int, table_name: str):
     try:
         create_table_if_not_exists(cursor, df, table_name)
 
-        parquet_path = f"tmp/cdc_batch_{batch_id}.parquet"
-        df.write_parquet(parquet_path)
+        parquet_path = _staging_parquet_path(f"cdc_batch_{batch_id}.parquet")
+        df.write_parquet(str(parquet_path))
 
         cursor.execute(f"PUT file://{parquet_path} @%{table_name}")
         cursor.execute(f"""
@@ -103,8 +118,8 @@ def upload_census_to_snowflake(df, table_name="US_CENSUS_2023"):
         # Create table dynamically
         create_table_if_not_exists(cursor, df, table_name)
 
-        parquet_path = f"tmp/census.parquet"
-        df.write_parquet(parquet_path)
+        parquet_path = _staging_parquet_path("census.parquet")
+        df.write_parquet(str(parquet_path))
 
         cursor.execute(f"PUT file://{parquet_path} @%{table_name}")
         cursor.execute(f"""
