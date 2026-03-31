@@ -1,0 +1,15 @@
+.git
+.venv
+.ruff_cache
+.pytest_cache
+.mypy_cache
+__pycache__
+*.pyc
+*.parquet
+*.duckdb
+dist
+build
+logs
+tests
+src/covid_project3/tmp
+src/covid_project3/ingestion/tmp
