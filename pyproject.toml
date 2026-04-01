@@ -20,6 +20,8 @@ dependencies = [
     "boto3>=1.42.75",
     "pyarrow>=23.0.1",
     "tqdm>=4.67",
+    "snowflake-snowpark-python>=1.48.1",
+    "plotly>=6.6.0",
 ]
 
 [project.scripts]

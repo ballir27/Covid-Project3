@@ -38,4 +38,8 @@ models:
     marts:
       +materialized: table
       +schema: marts
+      +post-hook:
+        - "{{ upload_to_stage('infrastructure/streamlit/app.py', 'MARTS', 'streamlit_stage') }}"
+        - "{{ upload_to_stage('infrastructure/streamlit/environment.yml', 'MARTS', 'streamlit_stage') }}"
+        - "{{ create_streamlit_app('US_covid_insights', 'MARTS', 'streamlit_stage') }}"
 
