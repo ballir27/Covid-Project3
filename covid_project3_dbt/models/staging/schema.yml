@@ -1,0 +1,10 @@
+version: 2
+
+sources:
+  - name: COVID19_DB
+    schema: BRONZE  
+    tables:
+      - name: CDC_RAW_CASES_1
+        description: "All CDC case data"
+      - name: US_CENSUS_2023
+        description: "US Census data for 2023"

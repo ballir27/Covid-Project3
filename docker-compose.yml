@@ -46,6 +46,9 @@ services:
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
 
+      # dbt profiles
+      - ~/.dbt:/home/airflow/.dbt:ro
+
       # AWS creds (optional)
       - ~/.aws:/home/airflow/.aws:ro
 
@@ -55,6 +58,32 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
+
+  streamlit:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    entrypoint:
+      - streamlit
+
+    command:
+      - run
+      - /opt/airflow/workspace/src/covid_project3/streamlit_app.py
+      - --server.address=0.0.0.0
+      - --server.port=8501
+
+    ports:
+      - "8501:8501"
+
+    env_file:
+      - ./.env
+
+    environment:
+      PYTHONPATH: /opt/airflow/workspace/src
+
+    volumes:
+      - .:/opt/airflow/workspace
 
 volumes:
   airflow_home:

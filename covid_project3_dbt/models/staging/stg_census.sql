@@ -1,0 +1,61 @@
+SELECT
+-- Totals and Demographics (Converted to BigInt for calculations)
+    CAST(NULLIF(TRIM("TOTAL_POPULATION"), '') AS BIGINT) AS Total_Population,
+    CAST(NULLIF(TRIM("MALE_POPULATION"), '') AS BIGINT) AS Male_Population,
+    CAST(NULLIF(TRIM("FEMALE_POPULATION"), '') AS BIGINT) AS Female_Population,
+
+    -- Age Groups (Converted to BigInt)
+    CAST(NULLIF(TRIM("UNDER_5_POPULATION"), '') AS BIGINT) AS Pop_Under_5,
+    CAST(NULLIF(TRIM("5_TO_9_POPULATION"), '') AS BIGINT) AS Pop_5_To_9,
+    CAST(NULLIF(TRIM("10_TO_14_POPULATION"), '') AS BIGINT) AS Pop_10_To_14,
+    CAST(NULLIF(TRIM("15_TO_19_POPULATION"), '') AS BIGINT) AS Pop_15_To_19,
+    CAST(NULLIF(TRIM("20_TO_24_POPULATION"), '') AS BIGINT) AS Pop_20_To_24,
+    CAST(NULLIF(TRIM("25_TO_34_POPULATION"), '') AS BIGINT) AS Pop_25_To_34,
+    CAST(NULLIF(TRIM("35_TO_44_POPULATION"), '') AS BIGINT) AS Pop_35_To_44,
+    CAST(NULLIF(TRIM("45_TO_54_POPULATION"), '') AS BIGINT) AS Pop_45_To_54,
+    CAST(NULLIF(TRIM("55_TO_59_POPULATION"), '') AS BIGINT) AS Pop_55_To_59,
+    CAST(NULLIF(TRIM("60_TO_64_POPULATION"), '') AS BIGINT) AS Pop_60_To_64,
+    CAST(NULLIF(TRIM("65_TO_74_POPULATION"), '') AS BIGINT) AS Pop_65_To_74,
+    CAST(NULLIF(TRIM("75_TO_84_POPULATION"), '') AS BIGINT) AS Pop_75_To_84,
+    CAST(NULLIF(TRIM("85_PLUS_POPULATION"), '') AS BIGINT) AS Pop_85_Plus,
+
+    -- BROADER AGE CATEGORIES (Aggregated)
+    
+    -- "0 - 17 years"
+    (CAST(NULLIF(TRIM("UNDER_5_POPULATION"), '') AS BIGINT) + 
+    CAST(NULLIF(TRIM("5_TO_9_POPULATION"), '') AS BIGINT) + 
+    CAST(NULLIF(TRIM("10_TO_14_POPULATION"), '') AS BIGINT) +
+    -- Note: If precision is needed, we could assume 15-17 is ~60% of the 15-19 bucket.
+    -- For now, I will just sum the closest buckets:
+    CAST(NULLIF(TRIM("15_TO_19_POPULATION"), '') AS BIGINT)) AS Pop_0_To_19_Approx,
+
+    -- "18 to 49 years"
+    (CAST(NULLIF(TRIM("20_TO_24_POPULATION"), '') AS BIGINT) + 
+    CAST(NULLIF(TRIM("25_TO_34_POPULATION"), '') AS BIGINT) + 
+    CAST(NULLIF(TRIM("35_TO_44_POPULATION"), '') AS BIGINT) +
+    -- Adding partials if necessary, otherwise:
+    CAST(NULLIF(TRIM("45_TO_54_POPULATION"), '') AS BIGINT)) AS Pop_18_To_54_Approx,
+
+    -- "50 to 64 years"
+    (CAST(NULLIF(TRIM("55_TO_59_POPULATION"), '') AS BIGINT) + 
+    CAST(NULLIF(TRIM("60_TO_64_POPULATION"), '') AS BIGINT)) AS Pop_50_To_64_Approx,
+
+    -- "65+ years"
+    (CAST(NULLIF(TRIM("65_TO_74_POPULATION"), '') AS BIGINT) + 
+    CAST(NULLIF(TRIM("75_TO_84_POPULATION"), '') AS BIGINT) + 
+    CAST(NULLIF(TRIM("85_PLUS_POPULATION"), '') AS BIGINT)) AS Pop_65_Plus,
+
+    -- Race and Ethnicity (Converted to BigInt)
+    CAST(NULLIF(TRIM("WHITE_POPULATION"), '') AS BIGINT) AS Pop_White,
+    CAST(NULLIF(TRIM("BLACK_OR_AFRICAN_AMERICAN_POPULATION"), '') AS BIGINT) AS Pop_Black,
+    CAST(NULLIF(TRIM("AMERICAN_INDIAN_AND_ALASKA_NATIVE_POPULATION"), '') AS BIGINT) AS Pop_Amer_Indian_AK_Native,
+    CAST(NULLIF(TRIM("ASIAN_POPULATION"), '') AS BIGINT) AS Pop_Asian,
+    CAST(NULLIF(TRIM("NATIVE_HAWAIIAN_AND_OTHER_PACIFIC_ISLANDER_POPULATION"), '') AS BIGINT) AS Pop_Hawaiian_Pac_Islander,
+    CAST(NULLIF(TRIM("SOME_OTHER_RACE_POPULATION"), '') AS BIGINT) AS Pop_Other_Race,
+
+    -- Geography (Kept as Strings/Ints depending on use)
+    TRY_CAST(NULLIF(TRIM("STATE"), '') AS INT) AS State_Code,
+    TRY_CAST(NULLIF(TRIM("COUNTY"), '') AS INT) AS County_Code,
+    TRY_CAST(NULLIF(TRIM("FIPS_CODE"), '') AS INT) AS FIPS_Code
+
+FROM {{ source('COVID19_DB', 'US_CENSUS_2023') }}
