@@ -1,0 +1,13 @@
+covid_dbt:
+  outputs:
+    dev:
+      account: 
+      database: COVID19_DB
+      password: 
+      role: ACCOUNTADMIN
+      schema: BRONZE
+      threads: 1
+      type: snowflake
+      user: 
+      warehouse: COVID19_PROJECT3
+  target: dev
