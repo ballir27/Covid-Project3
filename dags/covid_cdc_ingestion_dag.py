@@ -19,14 +19,13 @@ logger.add(
 )
 
 # ---------------------------------------------------------------------------
-# CDC Config
+# CDC Config - Direct API to Snowflake ingestion
 # ---------------------------------------------------------------------------
 CDC_ENDPOINT = config.get("CDC_COVID_API_ENDPOINT")
 CDC_TABLE_NAME = "CDC_RAW_CASES_1"
 CDC_CONFIG = {
     "LIMIT": int(config.get("LIMIT", 10000)),
     "CONCURRENT_REQUESTS": int(config.get("CONCURRENT_REQUESTS", 10)),
-    "CONCURRENT_UPLOADS": int(config.get("CONCURRENT_UPLOADS", 5)),
 }
 # Column names match the n8mc-b4w4 (case-level) endpoint schema.
 CDC_UNIQUE_KEYS = ["case_month", "res_state", "county_fips_code"]

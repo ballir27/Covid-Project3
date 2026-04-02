@@ -1,2 +1,7 @@
 def main() -> None:
-    print("Hello from covid-project3!")
+	from covid_project3.main import main as cli_main
+
+	cli_main()
+
+
+__all__ = ["main"]

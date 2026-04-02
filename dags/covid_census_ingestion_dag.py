@@ -7,7 +7,6 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 from loguru import logger
 
-from covid_project3.config import config
 from covid_project3.ingestion.engine import run_census_pipeline
 
 # Redirect loguru to Airflow's stdlib logging so task logs are captured.
@@ -36,7 +35,7 @@ default_args = {
 with DAG(
     "covid_census_ingestion",
     default_args=default_args,
-    description="US Census data ingestion pipeline",
+    description="US Census data ingestion pipeline (direct to Snowflake)",
     schedule_interval="@weekly",  # Census data changes less frequently
     start_date=datetime(2026, 1, 1),
     catchup=False,

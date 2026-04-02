@@ -23,7 +23,7 @@ with DAG(
     "covid_master_pipeline",
     default_args=default_args,
     description=(
-        "Master orchestration DAG: runs ingestion, staging, "
+        "Master orchestration DAG: runs ingestion, "
         "and mart DAGs"
     ),
     schedule_interval="@daily",
@@ -118,11 +118,17 @@ with DAG(
     )
 
     # Set dependencies:
-    # Ingestions → staging models → marts
+    # Ingestions -> staging models -> marts
     [wait_for_cdc, wait_for_census] >> wait_for_stg_cdc_cases
     [wait_for_cdc, wait_for_census] >> wait_for_stg_census
 
     [wait_for_stg_cdc_cases, wait_for_stg_census] >> wait_for_mart
-    [wait_for_stg_cdc_cases, wait_for_stg_census] >> wait_for_mart_cases_per_100k
-    [wait_for_stg_cdc_cases, wait_for_stg_census] >> wait_for_mart_monthly_trends
-    [wait_for_stg_cdc_cases, wait_for_stg_census] >> wait_for_mart_source_freshness
+    [wait_for_stg_cdc_cases, wait_for_stg_census] >> (
+        wait_for_mart_cases_per_100k
+    )
+    [wait_for_stg_cdc_cases, wait_for_stg_census] >> (
+        wait_for_mart_monthly_trends
+    )
+    [wait_for_stg_cdc_cases, wait_for_stg_census] >> (
+        wait_for_mart_source_freshness
+    )
