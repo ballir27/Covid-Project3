@@ -33,7 +33,14 @@ services:
 
 
       # Your project path (VERY important for imports)
-      PYTHONPATH: /opt/airflow/workspace/src
+      PYTHONPATH: /opt/airflow/.local/lib/python3.12/site-packages:/opt/airflow/workspace/src
+
+      # Cosmos/dbt runtime config
+      DBT_PROJECT_DIR: /opt/airflow/workspace/covid_project3_dbt
+      DBT_PROFILE_NAME: covid_project3_dbt
+      DBT_TARGET_NAME: ${DBT_TARGET_NAME:-dev}
+      DBT_PROFILES_FILE: /home/airflow/.dbt/profiles.yml
+      DBT_EXECUTABLE_PATH: /opt/airflow/dbt_venv/bin/dbt
 
     volumes:
       # Airflow metadata (DB, sessions)
@@ -53,7 +60,7 @@ services:
       - ~/.aws:/home/airflow/.aws:ro
 
     healthcheck:
-      test: ["CMD", "curl", "--fail", "http://localhost:8080/api/v2/version"]
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 5

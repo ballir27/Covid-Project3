@@ -8,6 +8,7 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
+    "astronomer-cosmos>=1.10.2",
     "dbt-core>=1.11.7",
     "dbt-snowflake>=1.11.3",
     "httpx>=0.28.1",
@@ -21,7 +22,7 @@ dependencies = [
     "pyarrow>=23.0.1",
     "plotly>=6.0.0",
     "tqdm>=4.67",
-    "streamlit>=1.44.0",
+    "streamlit>=1.56.0",
 ]
 
 [project.scripts]

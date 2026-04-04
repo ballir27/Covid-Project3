@@ -1,11 +1,15 @@
 # dags/covid_dbt_mart_fct_deaths_per_cases_dag.py
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from airflow import DAG
-from airflow.operators.bash import BashOperator
 from airflow.operators.python import PythonOperator
 from loguru import logger
+
+from covid_project3.airflow.cosmos_config import (
+    DEFAULT_DAG_ARGS,
+    build_dbt_task_group,
+)
 
 # Redirect loguru to Airflow's stdlib logging so task logs are captured.
 logger.remove()
@@ -15,39 +19,18 @@ logger.add(
     colorize=False,
 )
 
-# ---------------------------------------------------------------------------
-# Default DAG args
-# ---------------------------------------------------------------------------
-default_args = {
-    "owner": "airflow",
-    "depends_on_past": False,
-    "email_on_failure": False,
-    "email_on_retry": False,
-    "retries": 1,
-    "retry_delay": timedelta(minutes=5),
-}
-
-# DBT project directory (inside Docker container)
-DBT_PROJECT_DIR = "/opt/airflow/workspace/covid_project3_dbt"
-
-# ---------------------------------------------------------------------------
-# DAG definition
-# ---------------------------------------------------------------------------
 with DAG(
     "covid_dbt_mart_fct_deaths_per_cases",
-    default_args=default_args,
-    description="dbt mart model: fct_deaths_per_cases",
-    schedule_interval=None,  # Manual trigger or triggered by upstream staging DAGs
+    default_args=DEFAULT_DAG_ARGS,
+    description="dbt mart model: fct_deaths_per_cases via Cosmos",
+    schedule_interval=None,
     start_date=datetime(2026, 1, 1),
     catchup=False,
-    tags=["covid", "dbt", "marts"],
+    tags=["covid", "dbt", "marts", "cosmos"],
 ) as dag:
-
-    dbt_mart_task = BashOperator(
-        task_id="dbt_mart_fct_deaths_per_cases",
-        bash_command=f"cd {DBT_PROJECT_DIR} && dbt run --select fct_deaths_per_cases --profiles-dir /home/airflow/.dbt",
-        do_xcom_push=False,
-        cwd=DBT_PROJECT_DIR,
+    dbt_mart_task = build_dbt_task_group(
+        group_id="fct_deaths_per_cases",
+        select="fct_deaths_per_cases",
     )
 
     def validate_mart():

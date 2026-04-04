@@ -1,11 +1,15 @@
 # dags/covid_dbt_mart_ops_source_freshness_dag.py
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from airflow import DAG
-from airflow.operators.bash import BashOperator
 from airflow.operators.python import PythonOperator
 from loguru import logger
+
+from covid_project3.airflow.cosmos_config import (
+    DEFAULT_DAG_ARGS,
+    build_dbt_task_group,
+)
 
 logger.remove()
 logger.add(
@@ -14,36 +18,18 @@ logger.add(
     colorize=False,
 )
 
-default_args = {
-    "owner": "airflow",
-    "depends_on_past": False,
-    "email_on_failure": False,
-    "email_on_retry": False,
-    "retries": 1,
-    "retry_delay": timedelta(minutes=5),
-}
-
-DBT_PROJECT_DIR = "/opt/airflow/workspace/covid_project3_dbt"
-
 with DAG(
     "covid_dbt_mart_ops_source_freshness",
-    default_args=default_args,
-    description="dbt mart model: ops_source_freshness",
+    default_args=DEFAULT_DAG_ARGS,
+    description="dbt mart model: ops_source_freshness via Cosmos",
     schedule_interval=None,
     start_date=datetime(2026, 1, 1),
     catchup=False,
-    tags=["covid", "dbt", "marts", "ops"],
+    tags=["covid", "dbt", "marts", "ops", "cosmos"],
 ) as dag:
-
-    dbt_mart_task = BashOperator(
-        task_id="dbt_mart_ops_source_freshness",
-        bash_command=(
-            f"cd {DBT_PROJECT_DIR} && "
-            "dbt run --select ops_source_freshness "
-            "--profiles-dir /home/airflow/.dbt"
-        ),
-        do_xcom_push=False,
-        cwd=DBT_PROJECT_DIR,
+    dbt_mart_task = build_dbt_task_group(
+        group_id="ops_source_freshness",
+        select="ops_source_freshness",
     )
 
     def validate_mart():

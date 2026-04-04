@@ -1,17 +1,17 @@
 # src/covid_project3/ingestion/census_fetcher.py
-import os
 from urllib.parse import quote, urlencode
+
 import polars as pl
 import requests
 from loguru import logger
-from dotenv import load_dotenv
 
-load_dotenv()
+from covid_project3.config import config
+
 
 def fetch_census_fips():
     """Fetch FIPS population data from Census API"""
-    census_api_url = os.getenv("CENSUS_API_URL")
-    census_api_key = os.getenv("CENSUS_API_KEY")
+    census_api_url = config.get("CENSUS_API_URL")
+    census_api_key = config.get("CENSUS_API_KEY")
 
     params = {
         "get": (
@@ -25,7 +25,11 @@ def fetch_census_fips():
         "key": census_api_key,
     }
 
-    query_string = urlencode(params, quote_via=quote).replace('%2A', '*').replace('%3A', ':')
+    query_string = (
+        urlencode(params, quote_via=quote)
+        .replace("%2A", "*")
+        .replace("%3A", ":")
+    )
     full_url = f"{census_api_url}?{query_string}"
 
     try:
@@ -54,10 +58,14 @@ def fetch_census_fips():
             "DP05_0069E": "Black_Or_African_American_Population",
             "DP05_0070E": "American_Indian_And_Alaska_Native_Population",
             "DP05_0071E": "Asian_Population",
-            "DP05_0072E": "Native_Hawaiian_And_Other_Pacific_Islander_Population",
+            "DP05_0072E": (
+                "Native_Hawaiian_And_Other_Pacific_Islander_Population"
+            ),
             "DP05_0073E": "Some_Other_Race_Population",
         })
-        df = df.with_columns((pl.col("state") + pl.col("county")).alias("fips_code"))
+        df = df.with_columns(
+            (pl.col("state") + pl.col("county")).alias("fips_code")
+        )
         logger.info(f"Fetched {df.height} rows from Census API")
         return df
     except Exception as e:

@@ -1,11 +1,15 @@
 # dags/covid_dbt_stg_cdc_cases_dag.py
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from airflow import DAG
-from airflow.operators.bash import BashOperator
 from airflow.operators.python import PythonOperator
 from loguru import logger
+
+from covid_project3.airflow.cosmos_config import (
+    DEFAULT_DAG_ARGS,
+    build_dbt_task_group,
+)
 
 # Redirect loguru to Airflow's stdlib logging so task logs are captured.
 logger.remove()
@@ -15,47 +19,23 @@ logger.add(
     colorize=False,
 )
 
-# ---------------------------------------------------------------------------
-# Default DAG args
-# ---------------------------------------------------------------------------
-default_args = {
-    "owner": "airflow",
-    "depends_on_past": False,
-    "email_on_failure": False,
-    "email_on_retry": False,
-    "retries": 1,
-    "retry_delay": timedelta(minutes=5),
-}
-
-# DBT project directory (inside Docker container)
-DBT_PROJECT_DIR = "/opt/airflow/workspace/covid_project3_dbt"
-
-# ---------------------------------------------------------------------------
-# DAG definition
-# ---------------------------------------------------------------------------
 with DAG(
     "covid_dbt_stg_cdc_cases",
-    default_args=default_args,
-    description="dbt staging model: stg_cdc_cases",
-    schedule_interval=None,  # Manual trigger or triggered by upstream DAGs
+    default_args=DEFAULT_DAG_ARGS,
+    description="dbt staging model: stg_cdc_cases via Cosmos",
+    schedule_interval=None,
     start_date=datetime(2026, 1, 1),
     catchup=False,
-    tags=["covid", "dbt", "staging", "cdc"],
+    tags=["covid", "dbt", "staging", "cdc", "cosmos"],
 ) as dag:
-
-    # Using BashOperator to run dbt
-    dbt_stg_cdc_cases_task = BashOperator(
-        task_id="dbt_stg_cdc_cases",
-        bash_command=f"cd {DBT_PROJECT_DIR} && dbt run --select stg_cdc_cases --profiles-dir /home/airflow/.dbt",
-        do_xcom_push=False,
-        cwd=DBT_PROJECT_DIR,
+    dbt_stg_cdc_cases_task = build_dbt_task_group(
+        group_id="stg_cdc_cases",
+        select="stg_cdc_cases",
     )
 
-    # Optional: Add a Python task that validates the model was created
     def validate_stg_cdc_cases():
         """Validate that stg_cdc_cases model exists in Snowflake."""
         logger.info("Validating stg_cdc_cases model...")
-        # Add your validation logic here (e.g., row count check, schema validation)
         logger.info("stg_cdc_cases validation completed!")
 
     validate_task = PythonOperator(
@@ -63,5 +43,4 @@ with DAG(
         python_callable=validate_stg_cdc_cases,
     )
 
-    # Task dependencies
     dbt_stg_cdc_cases_task >> validate_task
