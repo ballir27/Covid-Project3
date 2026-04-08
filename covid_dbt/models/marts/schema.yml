@@ -3,3 +3,6 @@ version: 2
 models:
   - name: fct_deaths_per_cases
     description: "Fact table for deaths per cases"
+    
+  - name: fct_covid_by_fips
+    description: "Fact table for covid cases by fips"
