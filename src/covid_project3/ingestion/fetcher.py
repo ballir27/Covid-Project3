@@ -1,5 +1,4 @@
 
-# src/covid_project3/ingestion/fetcher.py
 import asyncio
 import time
 from functools import partial

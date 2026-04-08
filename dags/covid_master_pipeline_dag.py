@@ -76,8 +76,8 @@ with DAG(
         failed_states=["failed", "skipped"],
     )
 
-    # Wait for mart model to complete
-    wait_for_mart = ExternalTaskSensor(
+    # Wait for current mart models to complete
+    wait_for_mart_deaths = ExternalTaskSensor(
         task_id="wait_for_mart_fct_deaths_per_cases",
         external_dag_id="covid_dbt_mart_fct_deaths_per_cases",
         external_task_id="validate_fct_deaths_per_cases",
@@ -87,30 +87,10 @@ with DAG(
         failed_states=["failed", "skipped"],
     )
 
-    wait_for_mart_cases_per_100k = ExternalTaskSensor(
-        task_id="wait_for_mart_fct_cases_per_100k_by_state",
-        external_dag_id="covid_dbt_mart_fct_cases_per_100k_by_state",
-        external_task_id="validate_fct_cases_per_100k_by_state",
-        poke_interval=60,
-        timeout=3600,
-        allowed_states=["success"],
-        failed_states=["failed", "skipped"],
-    )
-
-    wait_for_mart_monthly_trends = ExternalTaskSensor(
-        task_id="wait_for_mart_fct_monthly_case_trends",
-        external_dag_id="covid_dbt_mart_fct_monthly_case_trends",
-        external_task_id="validate_fct_monthly_case_trends",
-        poke_interval=60,
-        timeout=3600,
-        allowed_states=["success"],
-        failed_states=["failed", "skipped"],
-    )
-
-    wait_for_mart_source_freshness = ExternalTaskSensor(
-        task_id="wait_for_mart_ops_source_freshness",
-        external_dag_id="covid_dbt_mart_ops_source_freshness",
-        external_task_id="validate_ops_source_freshness",
+    wait_for_mart_covid_by_fips = ExternalTaskSensor(
+        task_id="wait_for_mart_fct_covid_by_fips",
+        external_dag_id="covid_dbt_mart_fct_covid_by_fips",
+        external_task_id="validate_fct_covid_by_fips",
         poke_interval=60,
         timeout=3600,
         allowed_states=["success"],
@@ -122,13 +102,7 @@ with DAG(
     [wait_for_cdc, wait_for_census] >> wait_for_stg_cdc_cases
     [wait_for_cdc, wait_for_census] >> wait_for_stg_census
 
-    [wait_for_stg_cdc_cases, wait_for_stg_census] >> wait_for_mart
+    [wait_for_stg_cdc_cases, wait_for_stg_census] >> wait_for_mart_deaths
     [wait_for_stg_cdc_cases, wait_for_stg_census] >> (
-        wait_for_mart_cases_per_100k
-    )
-    [wait_for_stg_cdc_cases, wait_for_stg_census] >> (
-        wait_for_mart_monthly_trends
-    )
-    [wait_for_stg_cdc_cases, wait_for_stg_census] >> (
-        wait_for_mart_source_freshness
+        wait_for_mart_covid_by_fips
     )
