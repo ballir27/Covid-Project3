@@ -4,11 +4,5 @@ models:
   - name: fct_deaths_per_cases
     description: "Region-level case fatality and hospitalization severity summary by state."
 
-  - name: fct_cases_per_100k_by_state
-    description: "Population-normalized case, death, and hospitalization rates by state using Census population totals."
-
-  - name: fct_monthly_case_trends
-    description: "Monthly state-level case trend mart with 3-month rolling averages. This is the closest supported metric because the CDC source is monthly, not daily."
-
-  - name: ops_source_freshness
-    description: "Operational freshness mart showing row counts, latest business date, and last refresh timing for each source table."
+  - name: fct_covid_by_fips
+    description: "County/FIPS-level COVID outcome mart that combines case counts with Census population data for geographic analysis."
