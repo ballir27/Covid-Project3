@@ -3,52 +3,36 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-
+    # Ensures compatibility with Apple Silicon (M1/M2/M3)
+    platform: linux/amd64 
     command: standalone
-
     ports:
       - "8080:8080"
-
     env_file:
       - ./.env
-
     environment:
-      # Core Airflow config
       AIRFLOW_HOME: /home/airflow
       AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/dags
       AIRFLOW__CORE__EXECUTOR: SequentialExecutor
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
       AIRFLOW__CORE__PARALLELISM: 32
       AIRFLOW__CORE__MAX_ACTIVE_TASKS_PER_DAG: 16
-
-      # Webserver (fixes your CSRF + login issues)
       AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW_SECRET_KEY}
-
-      # Create admin user automatically
       _AIRFLOW_WWW_USER_USERNAME: ${AIRFLOW_USERNAME}
       _AIRFLOW_WWW_USER_PASSWORD: ${AIRFLOW_PASSWORD}
       _AIRFLOW_WWW_USER_FIRSTNAME: ${AIRFLOW_FIRSTNAME}
       _AIRFLOW_WWW_USER_LASTNAME: ${AIRFLOW_LASTNAME}
       _AIRFLOW_WWW_USER_EMAIL: ${AIRFLOW_EMAIL}
-
-
-      # Your project path (VERY important for imports)
       PYTHONPATH: /opt/airflow/workspace/src
-
+      # Fixes permission issues on Windows/Mac volumes
+      _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
     volumes:
-      # Airflow metadata (DB, sessions)
       - airflow_home:/home/airflow
-
-      # Your project code
       - .:/opt/airflow/workspace
-
-      # DAGs + logs
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
-
-      # AWS creds (optional)
-      - ~/.aws:/home/airflow/.aws:ro
-
+      # Use a conditional or relative path for AWS to avoid Windows path errors
+      - ${HOME:-~}/.aws:/home/airflow/.aws:ro
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8080/api/v2/version"]
       interval: 30s
