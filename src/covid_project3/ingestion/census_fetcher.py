@@ -32,8 +32,8 @@ def fetch_census_fips():
         resp = requests.get(full_url, timeout=15)
         resp.raise_for_status()
         data = resp.json()
-        df = pl.DataFrame(data[1:], schema=data[0], orient="row")
-        df = df.rename({
+        census_fips_df = pl.DataFrame(data[1:], schema=data[0], orient="row")
+        census_fips_df = census_fips_df.rename({
             "DP05_0001E": "Total_Population",
             "DP05_0002E": "Male_Population",
             "DP05_0003E": "Female_Population",
@@ -57,9 +57,11 @@ def fetch_census_fips():
             "DP05_0072E": "Native_Hawaiian_And_Other_Pacific_Islander_Population",
             "DP05_0073E": "Some_Other_Race_Population",
         })
-        df = df.with_columns((pl.col("state") + pl.col("county")).alias("fips_code"))
-        logger.info(f"Fetched {df.height} rows from Census API")
-        return df
+        census_fips_df = census_fips_df.with_columns(
+            (pl.col("state") + pl.col("county")).alias("fips_code")
+        )
+        logger.info(f"Fetched {census_fips_df.height} rows from Census API")
+        return census_fips_df
     except Exception as e:
         logger.error(f"Failed to fetch Census FIPS data: {e}")
         raise

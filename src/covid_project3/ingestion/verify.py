@@ -37,12 +37,16 @@ def verify_pipeline(endpoint: str, table_name: str):
 
     if api_total != -1:
         if api_total == sf_rows:
-            result["status"] = "✅ All rows fetched!"
+            result["status"] = "All rows fetched."
         elif sf_rows < api_total:
-            result["status"] = f"⚠️ Missing {api_total - sf_rows} rows in Snowflake."
+            result["status"] = (
+                f"Missing {api_total - sf_rows} rows in Snowflake."
+            )
         else:
-            result["status"] = f"⚠️ Snowflake has {sf_rows - api_total} extra rows."
+            result["status"] = (
+                f"Snowflake has {sf_rows - api_total} extra rows."
+            )
     else:
-        result["status"] = "⚠️ Cannot verify total rows from API."
+        result["status"] = "Cannot verify total rows from API."
 
     return result

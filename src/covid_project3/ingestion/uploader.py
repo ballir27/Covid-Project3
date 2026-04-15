@@ -35,7 +35,7 @@ def get_connection():
     return conn
 
 
-def create_table_if_not_exists(cursor, df: pl.DataFrame, table_name: str):
+def create_table_if_not_exists(cursor, dataset_df: pl.DataFrame, table_name: str):
     dtype_mapping = {
         pl.Int64: "NUMBER",
         pl.Int32: "NUMBER",
@@ -47,8 +47,8 @@ def create_table_if_not_exists(cursor, df: pl.DataFrame, table_name: str):
         pl.Datetime: "TIMESTAMP_NTZ",
     }
     columns = []
-    for col in df.columns:
-        dtype = df[col].dtype
+    for col in dataset_df.columns:
+        dtype = dataset_df[col].dtype
         snow_type = dtype_mapping.get(type(dtype), "STRING")
         columns.append(f'"{col.upper()}" {snow_type}')
 
@@ -78,20 +78,27 @@ def get_latest_value(table_name: str, unique_key_cols: list):
             cursor.close()
 
 
-def generate_unique_key(df: pl.DataFrame, unique_key_cols: list) -> pl.DataFrame:
-    return df.with_columns(
-        pl.concat_str([pl.col(c).cast(pl.Utf8) for c in unique_key_cols], separator="|").alias("unique_key")
+def generate_unique_key(
+    dataset_df: pl.DataFrame, unique_key_cols: list
+) -> pl.DataFrame:
+    return dataset_df.with_columns(
+        pl.concat_str(
+            [pl.col(c).cast(pl.Utf8) for c in unique_key_cols],
+            separator="|",
+        ).alias("unique_key")
     )
 
 
-def upload_to_snowflake(df: pl.DataFrame, batch_id: int, table_name: str):
+def upload_to_snowflake(
+    cdc_cases_batch_df: pl.DataFrame, batch_id: int, table_name: str
+):
     conn = get_connection()
     cursor = conn.cursor()
     try:
-        create_table_if_not_exists(cursor, df, table_name)
+        create_table_if_not_exists(cursor, cdc_cases_batch_df, table_name)
 
         parquet_path = _staging_parquet_path(f"cdc_batch_{batch_id}.parquet")
-        df.write_parquet(str(parquet_path))
+        cdc_cases_batch_df.write_parquet(str(parquet_path))
 
         cursor.execute(f"PUT file://{parquet_path} @%{table_name}")
         cursor.execute(f"""
@@ -102,24 +109,26 @@ def upload_to_snowflake(df: pl.DataFrame, batch_id: int, table_name: str):
         """)
         logger.info(f"🚀 BULK loaded batch {batch_id}")
     except Exception as e:
-        logger.error(f"❌ Batch {batch_id} failed: {e}")
+        logger.error(f"Batch {batch_id} failed: {e}")
     finally:
         if cursor:
             cursor.close()
 
-def upload_census_to_snowflake(df, table_name="US_CENSUS_2023"):
+
+def upload_census_to_snowflake(
+    census_fips_df: pl.DataFrame, table_name="US_CENSUS_2023"
+):
     """
-    Upload the Census FIPS data to Snowflake using the existing uploader
+    Upload the Census FIPS data to Snowflake using the existing uploader.
     """
-    from loguru import logger
     conn = get_connection()
     cursor = conn.cursor()
     try:
         # Create table dynamically
-        create_table_if_not_exists(cursor, df, table_name)
+        create_table_if_not_exists(cursor, census_fips_df, table_name)
 
         parquet_path = _staging_parquet_path("census.parquet")
-        df.write_parquet(str(parquet_path))
+        census_fips_df.write_parquet(str(parquet_path))
 
         cursor.execute(f"PUT file://{parquet_path} @%{table_name}")
         cursor.execute(f"""
@@ -133,7 +142,7 @@ def upload_census_to_snowflake(df, table_name="US_CENSUS_2023"):
         cursor.close()
         
         
-# ✅ New function to count Snowflake rows
+# New function to count Snowflake rows
 def count_snowflake_rows(table_name: str) -> int:
     conn = None
     cursor = None

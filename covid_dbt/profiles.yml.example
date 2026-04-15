@@ -1,4 +1,4 @@
-covid_dbt:
+covid_project3_dbt:
   outputs:
     dev:
       account: 

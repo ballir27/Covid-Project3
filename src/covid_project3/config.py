@@ -22,7 +22,12 @@ from dotenv import dotenv_values
 #     return snow_conn
 # src/covid_project3/config.py
 # Get absolute path to project root
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+PROJECT_ROOT = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..")
+)
 
-# Load .env from project root
-config = dotenv_values(os.path.join(PROJECT_ROOT, ".env"))
+# Load `.env` defaults, then let real environment variables override them.
+config = {
+    **dotenv_values(os.path.join(PROJECT_ROOT, ".env")),
+    **os.environ,
+}
