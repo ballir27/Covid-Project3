@@ -39,6 +39,8 @@ async def fetch_page(
     url = f"{endpoint}?$limit={limit}&$offset={offset}"
     retries = 0
 
+    # This section fails silently and returns False on any error, which is not ideal for debugging and can hide issues. 
+    #  Consider raising exceptions instead of returning False
     while retries < MAX_RETRIES:
         try:
             # Reuse shared HTTP client
@@ -141,7 +143,8 @@ async def fetch_page(
     fetch_bar.update(1)
     return False
 
-
+# again here returning -1 on error is not ideal, consider raising exceptions instead to fail fast and early, 
+#REturning -1 can hide issues. 
 def get_total_rows_from_api(endpoint: str) -> int:
     """
     Try to get total rows from the API.

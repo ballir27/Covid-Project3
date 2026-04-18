@@ -22,6 +22,8 @@ from dotenv import dotenv_values
 #     return snow_conn
 # src/covid_project3/config.py
 # Get absolute path to project root
+
+# There are better ways to handle paths and configuration, consider using a library like pydantic or dynaconf for more robust configuration management.
 PROJECT_ROOT = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "..")
 )

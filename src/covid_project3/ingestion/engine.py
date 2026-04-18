@@ -33,11 +33,12 @@ async def run_pipeline(
     unique_key_cols: list,
     select_columns: list | None = None,
 ):
+    # there are cleaner ways to do this
     LIMIT = int(config.get("LIMIT", 10000))  # noqa: N806
     CONCURRENT_REQUESTS = int(  # noqa: N806
         config.get("CONCURRENT_REQUESTS", 10)
     )
-    CONCURRENT_UPLOADS = int(config.get("CONCURRENT_UPLOADS", 5))  # noqa: N806
+    CONCURRENT_UPLOADS = int(config.get("CONCURRENT_UPLOADS", 5))  # noqa: N806 
 
     latest_value = get_latest_value(table_name, unique_key_cols)
     logger.info(f"Latest value in {table_name}: {latest_value}")
